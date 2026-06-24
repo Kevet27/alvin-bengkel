@@ -54,32 +54,33 @@ else:
 
     if st.session_state.role == "admin":
 
-        menu = st.sidebar.selectbox(
-            "Menu Admin",
-            [
-                "Dashboard",
-                "Kelola Layanan",
-                "Kelola Cabang",
-                "Booking Masuk",
-                "Customer Care",
-                "Logout"
-            ]
-        )
+       menu = st.sidebar.selectbox(
+    "Menu Admin",
+    [
+        "Dashboard",
+        "Kelola Layanan",
+        "Kelola Cabang",
+        "Booking Masuk",
+        "Customer Care",
+        "Transaksi",
+        "Logout"
+    ]
+)
 
     else:
 
-        menu = st.sidebar.selectbox(
-            "Menu User",
-            [
-                "Beranda",
-                "Layanan",
-                "Service Panggilan",
-                "History",
-                "Customer Care",
-                "Profil",
-                "Logout"
-            ]
-        )
+       menu = st.sidebar.selectbox(
+    "Menu Admin",
+    [
+        "Dashboard",
+        "Kelola Layanan",
+        "Kelola Cabang",
+        "Booking Masuk",
+        "Customer Care",
+        "Transaksi",
+        "Logout"
+    ]
+)
 
 # ==========================
 # BERANDA
