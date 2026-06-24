@@ -507,3 +507,238 @@ elif menu == "Logout":
     )
 
     st.rerun()
+
+# ==========================
+# DASHBOARD ADMIN
+# ==========================
+elif menu == "Dashboard":
+
+    st.title("Dashboard Admin")
+
+    # =====================
+    # JUMLAH USER
+    # =====================
+    c.execute("SELECT COUNT(*) FROM users")
+    jumlah_user = c.fetchone()[0]
+
+    # =====================
+    # JUMLAH LAYANAN
+    # =====================
+    c.execute("SELECT COUNT(*) FROM layanan")
+    jumlah_layanan = c.fetchone()[0]
+
+    # =====================
+    # JUMLAH CABANG
+    # =====================
+    c.execute("SELECT COUNT(*) FROM cabang")
+    jumlah_cabang = c.fetchone()[0]
+
+    # =====================
+    # JUMLAH BOOKING
+    # =====================
+    c.execute("SELECT COUNT(*) FROM booking")
+    jumlah_booking = c.fetchone()[0]
+
+    # =====================
+    # TOTAL PENGADUAN
+    # =====================
+    c.execute("SELECT COUNT(*) FROM pengaduan")
+    jumlah_pengaduan = c.fetchone()[0]
+
+    # =====================
+    # TOTAL PENDAPATAN
+    # =====================
+    c.execute("""
+    SELECT SUM(harga)
+    FROM transaksi
+    """)
+
+    total_pendapatan = c.fetchone()[0]
+
+    if total_pendapatan is None:
+        total_pendapatan = 0
+
+    st.subheader("Statistik Bengkel")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+
+        st.metric(
+            "Jumlah User",
+            jumlah_user
+        )
+
+        st.metric(
+            "Jumlah Layanan",
+            jumlah_layanan
+        )
+
+    with col2:
+
+        st.metric(
+            "Jumlah Cabang",
+            jumlah_cabang
+        )
+
+        st.metric(
+            "Jumlah Booking",
+            jumlah_booking
+        )
+
+    with col3:
+
+        st.metric(
+            "Jumlah Pengaduan",
+            jumlah_pengaduan
+        )
+
+        st.metric(
+            "Pendapatan",
+            f"Rp {total_pendapatan:,}"
+        )
+
+    st.divider()
+
+    st.subheader("Ringkasan Sistem")
+
+    st.success(
+        f"""
+Jumlah User : {jumlah_user}
+
+Jumlah Layanan : {jumlah_layanan}
+
+Jumlah Cabang : {jumlah_cabang}
+
+Jumlah Booking : {jumlah_booking}
+
+Jumlah Pengaduan : {jumlah_pengaduan}
+
+Total Pendapatan : Rp {total_pendapatan:,}
+"""
+    )
+
+# ==========================
+# KELOLA CABANG
+# ==========================
+elif menu == "Kelola Cabang":
+
+    st.title("Kelola Cabang Bengkel")
+
+    nama_bengkel = st.text_input(
+        "Nama Bengkel"
+    )
+
+    alamat = st.text_area(
+        "Alamat"
+    )
+
+    telepon = st.text_input(
+        "Nomor Telepon"
+    )
+
+    if st.button(
+        "Tambah Cabang"
+    ):
+
+        c.execute("""
+        INSERT INTO cabang(
+        nama_bengkel,
+        alamat,
+        telepon
+        )
+        VALUES(?,?,?)
+        """,
+        (
+            nama_bengkel,
+            alamat,
+            telepon
+        ))
+
+        conn.commit()
+
+        st.success(
+            "Cabang berhasil ditambahkan"
+        )
+
+        st.rerun()
+
+    st.divider()
+
+    st.subheader(
+        "Daftar Cabang"
+    )
+
+    c.execute("""
+    SELECT *
+    FROM cabang
+    ORDER BY id DESC
+    """)
+
+    data = c.fetchall()
+
+    for d in data:
+
+        with st.expander(
+            d["nama_bengkel"]
+        ):
+
+            alamat_baru = st.text_area(
+                "Alamat",
+                value=d["alamat"],
+                key=f"a{d['id']}"
+            )
+
+            telepon_baru = st.text_input(
+                "Telepon",
+                value=d["telepon"],
+                key=f"t{d['id']}"
+            )
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+
+                if st.button(
+                    "Update Cabang",
+                    key=f"uc{d['id']}"
+                ):
+
+                    c.execute("""
+                    UPDATE cabang
+                    SET alamat=?,
+                    telepon=?
+                    WHERE id=?
+                    """,
+                    (
+                        alamat_baru,
+                        telepon_baru,
+                        d["id"]
+                    ))
+
+                    conn.commit()
+
+                    st.success(
+                        "Cabang berhasil diperbarui"
+                    )
+
+                    st.rerun()
+
+            with col2:
+
+                if st.button(
+                    "Hapus Cabang",
+                    key=f"hc{d['id']}"
+                ):
+
+                    c.execute("""
+                    DELETE FROM cabang
+                    WHERE id=?
+                    """,
+                    (
+                        d["id"],
+                    ))
+
+                    conn.commit()
+
+                    st.rerun()
