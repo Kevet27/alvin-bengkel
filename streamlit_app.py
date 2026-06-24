@@ -743,3 +743,40 @@ elif menu == "Kelola Cabang":
                     conn.commit()
 
                     st.rerun()
+# ==========================
+# TRANSAKSI
+# ==========================
+elif menu == "Transaksi":
+
+    st.title("Laporan Transaksi")
+
+    c.execute("""
+    SELECT *
+    FROM transaksi
+    ORDER BY id DESC
+    """)
+
+    data = c.fetchall()
+
+    total = 0
+
+    for d in data:
+
+        total += d["harga"]
+
+        st.info(
+            f"""
+User : {d['username']}
+
+Layanan : {d['layanan']}
+
+Harga : Rp {d['harga']:,}
+
+Tanggal : {d['tanggal']}
+"""
+        )
+
+    st.success(
+        f"Total Pendapatan : Rp {total:,}"
+    )
+
