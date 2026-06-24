@@ -250,3 +250,242 @@ if st.session_state.login:
             ]
         )
 
+# ==============================
+# KELOLA LAYANAN
+# ==============================
+
+elif menu == "Kelola Layanan":
+
+    st.title("Kelola Layanan")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+
+        nama_layanan = st.text_input("Nama Layanan")
+        harga = st.number_input("Harga", 0)
+
+        deskripsi = st.text_area("Deskripsi")
+
+        if st.button("Tambah Layanan"):
+
+            c.execute("""
+            INSERT INTO layanan(
+            nama_layanan,harga,deskripsi)
+            VALUES(?,?,?)
+            """,
+            (
+                nama_layanan,
+                harga,
+                deskripsi
+            ))
+
+            conn.commit()
+
+            st.success("Layanan berhasil ditambahkan")
+            st.rerun()
+
+    st.subheader("Daftar Layanan")
+
+    c.execute("SELECT * FROM layanan")
+    data = c.fetchall()
+
+    for d in data:
+
+        col1, col2, col3 = st.columns([3,2,1])
+
+        with col1:
+            st.write(d["nama_layanan"])
+
+        with col2:
+            st.write(f"Rp {d['harga']:,}")
+
+        with col3:
+            if st.button("Hapus", key=d["id"]):
+
+                c.execute(
+                    "DELETE FROM layanan WHERE id=?",
+                    (d["id"],)
+                )
+
+                conn.commit()
+                st.rerun()
+
+# ==============================
+# KELOLA CABANG
+# ==============================
+
+elif menu == "Kelola Cabang":
+
+    st.title("Kelola Cabang Bengkel")
+
+    nama = st.text_input("Nama Bengkel")
+
+    alamat = st.text_area("Alamat")
+
+    telepon = st.text_input("Nomor Telepon")
+
+    if st.button("Tambah Cabang"):
+
+        c.execute("""
+        INSERT INTO cabang(
+        nama_bengkel,
+        alamat,
+        telepon)
+        VALUES(?,?,?)
+        """,
+        (
+            nama,
+            alamat,
+            telepon
+        ))
+
+        conn.commit()
+
+        st.success("Cabang berhasil ditambahkan")
+        st.rerun()
+
+    st.subheader("Daftar Cabang")
+
+    c.execute("SELECT * FROM cabang")
+    cabang = c.fetchall()
+
+    for x in cabang:
+
+        st.info(
+            f"""
+            {x['nama_bengkel']}
+
+            {x['alamat']}
+
+            {x['telepon']}
+            """
+        )
+
+        if st.button(
+            "Hapus Cabang",
+            key=f"cabang{x['id']}"
+        ):
+
+            c.execute(
+                "DELETE FROM cabang WHERE id=?",
+                (x["id"],)
+            )
+
+            conn.commit()
+
+            st.rerun()
+
+# ==============================
+# SERVICE PANGGILAN
+# ==============================
+
+elif menu == "Service Panggilan":
+
+    st.title("Booking Service")
+
+    c.execute("SELECT * FROM layanan")
+    layanan_db = c.fetchall()
+
+    daftar_layanan = []
+
+    for i in layanan_db:
+        daftar_layanan.append(i["nama_layanan"])
+
+    layanan = st.selectbox(
+        "Pilih Layanan",
+        daftar_layanan
+    )
+
+    jenis_service = st.radio(
+        "Jenis Service",
+        [
+            "Datang ke Bengkel",
+            "Service Panggilan"
+        ]
+    )
+
+    keluhan = st.text_area("Keluhan")
+
+    tanggal = st.date_input("Tanggal")
+
+    lokasi = st.text_area(
+        "Alamat Lengkap"
+    )
+
+    if st.button("Booking Sekarang"):
+
+        c.execute("""
+        INSERT INTO booking(
+        username,
+        layanan,
+        jenis_service,
+        keluhan,
+        tanggal,
+        lokasi,
+        status)
+        VALUES(?,?,?,?,?,?,?)
+        """,
+        (
+            st.session_state.username,
+            layanan,
+            jenis_service,
+            keluhan,
+            str(tanggal),
+            lokasi,
+            "Menunggu"
+        ))
+
+        conn.commit()
+
+        st.success(
+            "Booking berhasil dilakukan"
+        )
+
+# ==============================
+# HISTORY USER
+# ==============================
+
+elif menu == "History":
+
+    st.title("Riwayat Service")
+
+    c.execute("""
+    SELECT * FROM booking
+    WHERE username=?
+    ORDER BY id DESC
+    """,
+    (
+        st.session_state.username,
+    ))
+
+    data = c.fetchall()
+
+    if len(data) == 0:
+
+        st.warning(
+            "Belum ada riwayat service"
+        )
+
+    else:
+
+        for d in data:
+
+            st.container()
+
+            st.success(
+                f"""
+                Layanan : {d['layanan']}
+
+                Jenis : {d['jenis_service']}
+
+                Keluhan : {d['keluhan']}
+
+                Tanggal : {d['tanggal']}
+
+                Lokasi : {d['lokasi']}
+
+                Status : {d['status']}
+                """
+            )
+
