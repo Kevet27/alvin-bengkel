@@ -208,3 +208,302 @@ elif menu == "Login":
                 "Username atau password salah"
             )
 
+# ==========================
+# LAYANAN
+# ==========================
+elif menu == "Layanan":
+
+    st.title("Daftar Layanan Bengkel")
+
+    c.execute("""
+    SELECT * FROM layanan
+    """)
+
+    data = c.fetchall()
+
+    for d in data:
+
+        with st.container():
+
+            st.subheader(
+                d["nama_layanan"]
+            )
+
+            st.write(
+                d["deskripsi"]
+            )
+
+            st.success(
+                f"Rp {d['harga']:,}"
+            )
+
+
+# ==========================
+# SERVICE PANGGILAN
+# ==========================
+elif menu == "Service Panggilan":
+
+    st.title("Booking Service")
+
+    c.execute("""
+    SELECT *
+    FROM layanan
+    """)
+
+    data_layanan = c.fetchall()
+
+    daftar_layanan = []
+
+    for x in data_layanan:
+
+        daftar_layanan.append(
+            x["nama_layanan"]
+        )
+
+    layanan = st.selectbox(
+        "Pilih Layanan",
+        daftar_layanan
+    )
+
+    jenis_service = st.radio(
+        "Jenis Service",
+        [
+            "Datang ke Bengkel",
+            "Service Panggilan"
+        ]
+    )
+
+    keluhan = st.text_area(
+        "Keluhan Kendaraan"
+    )
+
+    tanggal = st.date_input(
+        "Tanggal Service"
+    )
+
+    lokasi = st.text_area(
+        "Alamat Lengkap"
+    )
+
+    if st.button(
+        "Booking Sekarang"
+    ):
+
+        c.execute("""
+        INSERT INTO booking(
+        username,
+        layanan,
+        jenis_service,
+        keluhan,
+        tanggal,
+        lokasi,
+        status
+        )
+        VALUES(?,?,?,?,?,?,?)
+        """,
+        (
+            st.session_state.username,
+            layanan,
+            jenis_service,
+            keluhan,
+            str(tanggal),
+            lokasi,
+            "Menunggu"
+        ))
+
+        conn.commit()
+
+        st.success(
+            "Booking berhasil dibuat"
+        )
+
+# ==========================
+# HISTORY SERVICE
+# ==========================
+elif menu == "History":
+
+    st.title("Riwayat Service")
+
+    c.execute("""
+    SELECT *
+    FROM booking
+    WHERE username=?
+    ORDER BY id DESC
+    """,
+    (
+        st.session_state.username,
+    ))
+
+    data = c.fetchall()
+
+    if len(data) == 0:
+
+        st.warning(
+            "Belum ada riwayat service"
+        )
+
+    else:
+
+        for d in data:
+
+            st.container()
+
+            st.info(
+                f"""
+Layanan : {d['layanan']}
+
+Jenis Service : {d['jenis_service']}
+
+Keluhan : {d['keluhan']}
+
+Tanggal : {d['tanggal']}
+
+Lokasi : {d['lokasi']}
+
+Status : {d['status']}
+"""
+            )
+
+
+# ==========================
+# CUSTOMER CARE
+# ==========================
+elif menu == "Customer Care":
+
+    st.title("Customer Care")
+
+    pesan = st.text_area(
+        "Keluhan atau Pengaduan"
+    )
+
+    if st.button(
+        "Kirim Pengaduan"
+    ):
+
+        c.execute("""
+        INSERT INTO pengaduan(
+        username,
+        pesan,
+        status
+        )
+        VALUES(?,?,?)
+        """,
+        (
+            st.session_state.username,
+            pesan,
+            "Belum Dibaca"
+        ))
+
+        conn.commit()
+
+        st.success(
+            "Pengaduan berhasil dikirim"
+        )
+
+    st.subheader(
+        "Riwayat Pengaduan"
+    )
+
+    c.execute("""
+    SELECT *
+    FROM pengaduan
+    WHERE username=?
+    ORDER BY id DESC
+    """,
+    (
+        st.session_state.username,
+    ))
+
+    data = c.fetchall()
+
+    for d in data:
+
+        st.info(
+            f"""
+Pesan :
+{d['pesan']}
+
+Status :
+{d['status']}
+"""
+        )
+
+
+# ==========================
+# PROFIL
+# ==========================
+elif menu == "Profil":
+
+    st.title("Profil Saya")
+
+    c.execute("""
+    SELECT *
+    FROM users
+    WHERE username=?
+    """,
+    (
+        st.session_state.username,
+    ))
+
+    user = c.fetchone()
+
+    nama = st.text_input(
+        "Nama",
+        value=user["nama"]
+    )
+
+    telepon = st.text_input(
+        "Nomor Telepon",
+        value=user["telepon"]
+    )
+
+    password_baru = st.text_input(
+        "Password Baru",
+        type="password"
+    )
+
+    if st.button(
+        "Simpan Perubahan"
+    ):
+
+        password = user["password"]
+
+        if password_baru != "":
+            password = password_baru
+
+        c.execute("""
+        UPDATE users
+        SET
+        nama=?,
+        telepon=?,
+        password=?
+        WHERE username=?
+        """,
+        (
+            nama,
+            telepon,
+            password,
+            st.session_state.username
+        ))
+
+        conn.commit()
+
+        st.success(
+            "Profil berhasil diperbarui"
+        )
+
+
+# ==========================
+# LOGOUT
+# ==========================
+elif menu == "Logout":
+
+    st.session_state.login = False
+    st.session_state.username = ""
+    st.session_state.role = ""
+
+    st.success(
+        "Logout berhasil"
+    )
+
+    st.rerun()
