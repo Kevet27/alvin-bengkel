@@ -489,3 +489,248 @@ elif menu == "History":
                 """
             )
 
+# =====================================
+# BOOKING MASUK
+# =====================================
+
+elif menu == "Booking Masuk":
+
+    st.title("Booking Masuk")
+
+    c.execute("""
+    SELECT * FROM booking
+    ORDER BY id DESC
+    """)
+
+    data = c.fetchall()
+
+    if data:
+
+        for d in data:
+
+            st.subheader(
+                f"Booking #{d['id']}"
+            )
+
+            st.write("User :", d["username"])
+            st.write("Layanan :", d["layanan"])
+            st.write("Jenis :", d["jenis_service"])
+            st.write("Keluhan :", d["keluhan"])
+            st.write("Tanggal :", d["tanggal"])
+            st.write("Lokasi :", d["lokasi"])
+            st.write("Status :", d["status"])
+
+            status_baru = st.selectbox(
+                "Ubah Status",
+                [
+                    "Menunggu",
+                    "Diproses",
+                    "Teknisi Menuju Lokasi",
+                    "Selesai"
+                ],
+                key=d["id"]
+            )
+
+            if st.button(
+                "Update",
+                key=f"u{d['id']}"
+            ):
+
+                c.execute("""
+                UPDATE booking
+                SET status=?
+                WHERE id=?
+                """,
+                (
+                    status_baru,
+                    d["id"]
+                ))
+
+                conn.commit()
+
+                st.success("Status diperbarui")
+                st.rerun()
+
+# =====================================
+# CUSTOMER CARE USER
+# =====================================
+
+elif menu == "Customer Care" and st.session_state.role == "user":
+
+    st.title("Customer Care")
+
+    pesan = st.text_area(
+        "Keluhan atau Pengaduan"
+    )
+
+    if st.button("Kirim"):
+
+        c.execute("""
+        INSERT INTO pengaduan(
+        username,
+        pesan,
+        status
+        )
+        VALUES(?,?,?)
+        """,
+        (
+            st.session_state.username,
+            pesan,
+            "Belum Dibaca"
+        ))
+
+        conn.commit()
+
+        st.success(
+            "Pengaduan berhasil dikirim"
+        )
+
+# =====================================
+# CUSTOMER CARE ADMIN
+# =====================================
+
+elif menu == "Customer Care" and st.session_state.role == "admin":
+
+    st.title("Daftar Pengaduan")
+
+    c.execute("""
+    SELECT * FROM pengaduan
+    ORDER BY id DESC
+    """)
+
+    data = c.fetchall()
+
+    for d in data:
+
+        st.info(
+            f"""
+User : {d['username']}
+
+Pesan :
+{d['pesan']}
+
+Status :
+{d['status']}
+"""
+        )
+
+        if st.button(
+            "Tandai Selesai",
+            key=f"p{d['id']}"
+        ):
+
+            c.execute("""
+            UPDATE pengaduan
+            SET status='Selesai'
+            WHERE id=?
+            """,
+            (
+                d["id"],
+            ))
+
+            conn.commit()
+
+            st.rerun()
+
+# =====================================
+# PROFIL
+# =====================================
+
+elif menu == "Profil":
+
+    st.title("Profil Saya")
+
+    c.execute("""
+    SELECT *
+    FROM users
+    WHERE username=?
+    """,
+    (
+        st.session_state.username,
+    ))
+
+    user = c.fetchone()
+
+    nama = st.text_input(
+        "Nama",
+        value=user["nama"]
+    )
+
+    telepon = st.text_input(
+        "Telepon",
+        value=user["telepon"]
+    )
+
+    password = st.text_input(
+        "Password Baru",
+        type="password"
+    )
+
+    if st.button("Simpan"):
+
+        if password == "":
+            password = user["password"]
+
+        c.execute("""
+        UPDATE users
+        SET nama=?,
+            telepon=?,
+            password=?
+        WHERE username=?
+        """,
+        (
+            nama,
+            telepon,
+            password,
+            st.session_state.username
+        ))
+
+        conn.commit()
+
+        st.success("Profil diperbarui")
+
+# =====================================
+# DASHBOARD ADMIN
+# =====================================
+
+elif menu == "Dashboard":
+
+    st.title("Dashboard Admin")
+
+    c.execute("SELECT COUNT(*) FROM users")
+    jumlah_user = c.fetchone()[0]
+
+    c.execute("SELECT COUNT(*) FROM layanan")
+    jumlah_layanan = c.fetchone()[0]
+
+    c.execute("SELECT COUNT(*) FROM cabang")
+    jumlah_cabang = c.fetchone()[0]
+
+    c.execute("SELECT COUNT(*) FROM booking")
+    jumlah_booking = c.fetchone()[0]
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.metric(
+            "Jumlah User",
+            jumlah_user
+        )
+
+        st.metric(
+            "Jumlah Layanan",
+            jumlah_layanan
+        )
+
+    with col2:
+
+        st.metric(
+            "Jumlah Cabang",
+            jumlah_cabang
+        )
+
+        st.metric(
+            "Jumlah Booking",
+            jumlah_booking
+        )
+
